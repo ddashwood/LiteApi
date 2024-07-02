@@ -59,30 +59,8 @@ internal class LiteApiServer : IHostedService
             {
                 try
                 {
-                    using var client = await _listener.AcceptTcpClientAsync(cancellationToken);
-                    await using var stream = client.GetStream();
-
-                    HttpRequest request = null!;
-                    string requestLine = ReadLine(stream);
-                    bool firstLine = true;
-                    while (!string.IsNullOrWhiteSpace(requestLine))
-                    {
-                        if (firstLine)
-                        {
-                            _logger.LogInformation("Received request: " + requestLine);
-                            request = new HttpRequest(requestLine);
-                        }
-                        else
-                        {
-                            _logger.LogDebug("Header: " + requestLine);
-                        }
-                        firstLine = false;
-                        requestLine = ReadLine(stream);
-                    }
-
-                    var response = new HttpResponse();
-                    await ProcessRequestAsync(request, response, cancellationToken);
-                    await ProcessResponseAsync(response, stream, cancellationToken);
+                    var client = await _listener.AcceptTcpClientAsync(cancellationToken);
+                    ThreadPool.QueueUserWorkItem<TcpClient>(ProcessClientAsync, client, true);
                 }
                 catch (Exception ex)
                 {
@@ -92,6 +70,44 @@ internal class LiteApiServer : IHostedService
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    private async void ProcessClientAsync(TcpClient client)
+    {
+        try
+        {
+            var stream = client.GetStream();
+
+            HttpRequest request = null!;
+            string requestLine = ReadLine(stream);
+            bool firstLine = true;
+            while (!string.IsNullOrWhiteSpace(requestLine))
+            {
+                if (firstLine)
+                {
+                    _logger.LogInformation("Received request: " + requestLine);
+                    request = new HttpRequest(requestLine);
+                }
+                else
+                {
+                    _logger.LogDebug("Header: " + requestLine);
+                }
+                firstLine = false;
+                requestLine = ReadLine(stream);
+            }
+
+            var response = new HttpResponse();
+            await ProcessRequestAsync(request, response, CancellationToken.None);
+            await ProcessResponseAsync(response, stream, CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing client request");
+        }
+        finally
+        {
+            client?.Dispose();
         }
     }
 
