@@ -2,9 +2,12 @@
 
 public class HttpResponse
 {
-    internal byte[] Content { get; }
+    internal byte[]? Content { get; private set; }
 
-    public HttpResponse(byte[] content)
+    internal HttpResponse()
+    { }
+
+    public void SetContent(byte[] content)
     {
         Content = content;
     }

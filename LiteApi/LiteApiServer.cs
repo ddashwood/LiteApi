@@ -70,7 +70,8 @@ internal class LiteApiServer : IHostedService
                         requestLine = ReadLine(stream);
                     }
 
-                    var response = await ProcessRequestAsync(request, cancellationToken);
+                    var response = new HttpResponse();
+                    await ProcessRequestAsync(request, response, cancellationToken);
                     await ProcessResponseAsync(response, stream, cancellationToken);
                 }
                 catch (Exception ex)
@@ -101,7 +102,7 @@ internal class LiteApiServer : IHostedService
         return sb.ToString();
     }
 
-    private async Task<HttpResponse> ProcessRequestAsync(HttpRequest request, CancellationToken cancellationToken)
+    private async Task ProcessRequestAsync(HttpRequest request, HttpResponse response, CancellationToken cancellationToken)
     {
         if (request.Resource == null)
         {
@@ -125,7 +126,7 @@ internal class LiteApiServer : IHostedService
 
         var content = await File.ReadAllBytesAsync(path, cancellationToken);
         content = RemoveBOM(content);
-        return new HttpResponse(content);
+        response.SetContent(content);
     }
 
     private byte[] RemoveBOM(byte[] bytes)
