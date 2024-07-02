@@ -70,7 +70,8 @@ internal class LiteApiServer : IHostedService
                         requestLine = ReadLine(stream);
                     }
 
-                    await ProcessRequestAsync(request, stream, cancellationToken);
+                    var response = await ProcessRequestAsync(request, cancellationToken);
+                    await ProcessResponseAsync(response, stream, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -100,7 +101,7 @@ internal class LiteApiServer : IHostedService
         return sb.ToString();
     }
 
-    private async Task ProcessRequestAsync(HttpRequest request, Stream responseStream, CancellationToken cancellationToken)
+    private async Task<HttpResponse> ProcessRequestAsync(HttpRequest request, CancellationToken cancellationToken)
     {
         if (request.Resource == null)
         {
@@ -124,7 +125,7 @@ internal class LiteApiServer : IHostedService
 
         var content = await File.ReadAllBytesAsync(path, cancellationToken);
         content = RemoveBOM(content);
-        await responseStream.WriteAsync(content, cancellationToken);
+        return new HttpResponse(content);
     }
 
     private byte[] RemoveBOM(byte[] bytes)
@@ -140,5 +141,10 @@ internal class LiteApiServer : IHostedService
         }
 
         return bytes;
+    }
+
+    private async Task ProcessResponseAsync(HttpResponse response, NetworkStream stream, CancellationToken cancellationToken)
+    {
+        await stream.WriteAsync(response.Content, cancellationToken);
     }
 }
