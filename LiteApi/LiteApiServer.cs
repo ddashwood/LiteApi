@@ -73,8 +73,7 @@ internal class LiteApiServer : IHostedService
             }
         }
         catch (OperationCanceledException)
-        {
-        }
+        { }
     }
 
     private async void ProcessClientAsync((TcpClient client, CancellationToken cancellationToken) clientAndToken)
@@ -88,6 +87,8 @@ internal class LiteApiServer : IHostedService
             await ProcessRequestAsync(request, response, clientAndToken.cancellationToken);
             await ProcessResponseAsync(response, stream, clientAndToken.cancellationToken);
         }
+        catch (OperationCanceledException)
+        { }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing client request");
