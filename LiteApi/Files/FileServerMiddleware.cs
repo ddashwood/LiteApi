@@ -34,12 +34,12 @@ internal class FileServerMiddleware : IMiddleware
 
     private async Task<string?> ProcessFileRequestAsync(HttpRequest request, HttpResponse response, CancellationToken cancellationToken)
     {
-        if (request.Resource == null)
+        if (request.Target == null)
         {
             return "No resource was specified";
         }
 
-        var resource = request.Resource == "/" ? "index.html" : request.Resource;
+        var resource = request.Target == "/" ? "index.html" : request.Target;
 
         var pathParts = resource.Split('/');
 
