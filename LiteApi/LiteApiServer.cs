@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Sockets;
@@ -10,13 +11,22 @@ internal class LiteApiServer : IHostedService
 {
     private TcpListener _listener = null!;
 
-    private ILogger<LiteApiServer> _logger;
-    private int _port;
+    private readonly ILogger<LiteApiServer> _logger;
+    private readonly int _port;
+    private readonly MiddlewarePipelineConfiguration _config;
+    private readonly IServiceProvider _services;
 
-    public LiteApiServer(ILogger<LiteApiServer> logger, int port)
+    public LiteApiServer(ILogger<LiteApiServer> logger,
+                         int port,
+                         Action<MiddlewarePipelineConfiguration> configurePipeline,
+                         IServiceProvider services)
     {
         _logger = logger;
         _port = port;
+        _services = services;
+
+        _config = new MiddlewarePipelineConfiguration();
+        configurePipeline(_config);
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -104,44 +114,20 @@ internal class LiteApiServer : IHostedService
 
     private async Task ProcessRequestAsync(HttpRequest request, HttpResponse response, CancellationToken cancellationToken)
     {
-        if (request.Resource == null)
+        using var scope = _services.CreateScope();
+
+        RequestDelegate del = (request, response) => Task.CompletedTask;
+        foreach (var middlewareCreator in _config.MiddlewareCreators)
         {
-            throw new InvalidOperationException("No resource was specified");
+            var previous = del;
+            del = (request, response) =>
+            {
+                var middleware = middlewareCreator(scope.ServiceProvider);
+                return middleware.InvokeAsync(request, response, previous, cancellationToken);
+            };
         }
 
-        var resource = request.Resource == "/" ? "index.html" : request.Resource;
-
-        var pathParts = resource.Split('/');
-
-        var path = "wwwroot";
-        foreach (var pathPart in pathParts)
-        {
-            path = Path.Combine(path, pathPart);
-        }
-
-        if (!File.Exists(path))
-        {
-            throw new InvalidOperationException("Requested resource not found");
-        }
-
-        var content = await File.ReadAllBytesAsync(path, cancellationToken);
-        content = RemoveBOM(content);
-        response.SetContent(content);
-    }
-
-    private byte[] RemoveBOM(byte[] bytes)
-    {
-        if (bytes.Length < 3)
-        {
-            return bytes;
-        }
-
-        if (bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
-        {
-            return bytes.Skip(3).ToArray();
-        }
-
-        return bytes;
+        await del(request, response);
     }
 
     private async Task ProcessResponseAsync(HttpResponse response, NetworkStream stream, CancellationToken cancellationToken)
