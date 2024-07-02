@@ -41,7 +41,7 @@ internal class LiteApiServer : IHostedService
         _listener?.Dispose();
     }
 
-    public async Task Run(CancellationToken cancellationToken)
+    private async Task Run(CancellationToken cancellationToken)
     {
         try
         {
