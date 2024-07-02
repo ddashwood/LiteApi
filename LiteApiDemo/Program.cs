@@ -1,2 +1,9 @@
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
+﻿using LiteApi;
+
+await Host.CreateDefaultBuilder()
+    .ConfigureServices(services =>
+    {
+        services.AddHostedService<LiteApiServer>();
+    })
+    .Build()
+    .RunAsync();
