@@ -16,17 +16,20 @@ internal class LiteApiServer : IHostedService
     private readonly MiddlewarePipelineConfiguration _config;
     private readonly IServiceProvider _services;
     private readonly HttpRequestFactory _httpRequestFactory;
+    private readonly HttpResponseProcessor _httpResponseProcessor;
 
     public LiteApiServer(ILogger<LiteApiServer> logger,
                          int port,
                          Action<MiddlewarePipelineConfiguration> configurePipeline,
                          IServiceProvider services,
-                         HttpRequestFactory httpRequestFactory)
+                         HttpRequestFactory httpRequestFactory,
+                         HttpResponseProcessor httpResponseProcessor)
     {
         _logger = logger;
         _port = port;
         _services = services;
         _httpRequestFactory = httpRequestFactory;
+        _httpResponseProcessor = httpResponseProcessor;
 
         _config = new MiddlewarePipelineConfiguration();
         configurePipeline(_config);
@@ -85,7 +88,7 @@ internal class LiteApiServer : IHostedService
 
             var response = new HttpResponse();
             await ProcessRequestAsync(request, response, clientAndToken.cancellationToken);
-            await ProcessResponseAsync(response, stream, clientAndToken.cancellationToken);
+            await _httpResponseProcessor.ProcessResponseAsync(response, stream, clientAndToken.cancellationToken);
         }
         catch (OperationCanceledException)
         { }
@@ -115,10 +118,5 @@ internal class LiteApiServer : IHostedService
         }
 
         await del(request, response);
-    }
-
-    private async Task ProcessResponseAsync(HttpResponse response, NetworkStream stream, CancellationToken cancellationToken)
-    {
-        await stream.WriteAsync(response.Content, cancellationToken);
     }
 }
