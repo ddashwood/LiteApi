@@ -21,7 +21,7 @@ internal class LiteApiServer : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        removeListener();
+        RemoveListener();
         _listener = new TcpListener(IPAddress.Any, _port);
         _listener.Start();
 
@@ -31,11 +31,11 @@ internal class LiteApiServer : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        removeListener();
+        RemoveListener();
         return Task.CompletedTask;
     }
 
-    private void removeListener()
+    private void RemoveListener()
     {
         _listener?.Stop();
         _listener?.Dispose();
