@@ -4,16 +4,17 @@ namespace LiteApi;
 
 public class HttpResponse
 {
-    internal byte[]? Content { get; private set; }
-    internal bool ResponseSet { get; private set; }
-    internal HttpStatusCode StatusCode { get; private set; } = HttpStatusCode.OK;
+    private byte[]? _content;
+    public byte[]? Content => _content?.ToArray();
+    public bool ResponseSet { get; private set; }
+    public HttpStatusCode StatusCode { get; private set; } = HttpStatusCode.OK;
 
     internal HttpResponse()
     { }
 
     public void SetContent(byte[] content)
     {
-        Content = content;
+        _content = content;
         ResponseSet = true;
     }
 
