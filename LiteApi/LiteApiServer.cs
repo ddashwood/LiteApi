@@ -15,15 +15,18 @@ internal class LiteApiServer : IHostedService
     private readonly int _port;
     private readonly MiddlewarePipelineConfiguration _config;
     private readonly IServiceProvider _services;
+    private readonly HttpRequestFactory _httpRequestFactory;
 
     public LiteApiServer(ILogger<LiteApiServer> logger,
                          int port,
                          Action<MiddlewarePipelineConfiguration> configurePipeline,
-                         IServiceProvider services)
+                         IServiceProvider services,
+                         HttpRequestFactory httpRequestFactory)
     {
         _logger = logger;
         _port = port;
         _services = services;
+        _httpRequestFactory = httpRequestFactory;
 
         _config = new MiddlewarePipelineConfiguration();
         configurePipeline(_config);
@@ -78,24 +81,7 @@ internal class LiteApiServer : IHostedService
         try
         {
             var stream = client.GetStream();
-
-            HttpRequest request = null!;
-            string requestLine = ReadLine(stream);
-            bool firstLine = true;
-            while (!string.IsNullOrWhiteSpace(requestLine))
-            {
-                if (firstLine)
-                {
-                    _logger.LogInformation("Received request: " + requestLine);
-                    request = new HttpRequest(requestLine);
-                }
-                else
-                {
-                    _logger.LogDebug("Header: " + requestLine);
-                }
-                firstLine = false;
-                requestLine = ReadLine(stream);
-            }
+            var request = _httpRequestFactory.CreateHttpRequest(stream);
 
             var response = new HttpResponse();
             await ProcessRequestAsync(request, response, CancellationToken.None);
@@ -109,23 +95,6 @@ internal class LiteApiServer : IHostedService
         {
             client?.Dispose();
         }
-    }
-
-    private string ReadLine(Stream stream)
-    {
-        StringBuilder sb = new StringBuilder();
-
-        int ch;
-        do
-        {
-            ch = stream.ReadByte();
-            if (ch != 10 && ch != 13)
-            {
-                sb.Append((char)ch);
-            }
-        } while (ch != 10);
-
-        return sb.ToString();
     }
 
     private async Task ProcessRequestAsync(HttpRequest request, HttpResponse response, CancellationToken cancellationToken)
