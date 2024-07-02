@@ -6,21 +6,23 @@ using System.Text;
 
 namespace LiteApi;
 
-public class LiteApiServer : IHostedService
+internal class LiteApiServer : IHostedService
 {
     private TcpListener _listener = null!;
 
     private ILogger<LiteApiServer> _logger;
+    private int _port;
 
-    public LiteApiServer(ILogger<LiteApiServer> logger)
+    public LiteApiServer(ILogger<LiteApiServer> logger, int port)
     {
         _logger = logger;
+        _port = port;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
         removeListener();
-        _listener = new TcpListener(IPAddress.Any, 80);
+        _listener = new TcpListener(IPAddress.Any, _port);
         _listener.Start();
 
         _ = Run(cancellationToken);

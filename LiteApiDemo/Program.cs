@@ -3,7 +3,7 @@
 await Host.CreateDefaultBuilder()
     .ConfigureServices(services =>
     {
-        services.AddHostedService<LiteApiServer>();
+        services.AddLiteApi(80);
     })
     .Build()
     .RunAsync();
