@@ -63,7 +63,8 @@ internal class LiteApiServer : IHostedService
                 try
                 {
                     var client = await _listener.AcceptTcpClientAsync(cancellationToken);
-                    ThreadPool.QueueUserWorkItem<TcpClient>(ProcessClientAsync, client, true);
+                    var request = (client, cancellationToken);
+                    ThreadPool.QueueUserWorkItem(ProcessClientAsync, request, true);
                 }
                 catch (Exception ex)
                 {
@@ -76,16 +77,16 @@ internal class LiteApiServer : IHostedService
         }
     }
 
-    private async void ProcessClientAsync(TcpClient client)
+    private async void ProcessClientAsync((TcpClient client, CancellationToken cancellationToken) clientAndToken)
     {
         try
         {
-            var stream = client.GetStream();
+            var stream = clientAndToken.client.GetStream();
             var request = _httpRequestFactory.CreateHttpRequest(stream);
 
             var response = new HttpResponse();
-            await ProcessRequestAsync(request, response, CancellationToken.None);
-            await ProcessResponseAsync(response, stream, CancellationToken.None);
+            await ProcessRequestAsync(request, response, clientAndToken.cancellationToken);
+            await ProcessResponseAsync(response, stream, clientAndToken.cancellationToken);
         }
         catch (Exception ex)
         {
@@ -93,7 +94,7 @@ internal class LiteApiServer : IHostedService
         }
         finally
         {
-            client?.Dispose();
+            clientAndToken.client?.Dispose();
         }
     }
 
