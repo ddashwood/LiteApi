@@ -52,6 +52,7 @@ internal class LiteApiServer : IHostedService
                     using var client = await _listener.AcceptTcpClientAsync(cancellationToken);
                     await using var stream = client.GetStream();
 
+                    HttpRequest request = null!;
                     string requestLine = ReadLine(stream);
                     bool firstLine = true;
                     while (!string.IsNullOrWhiteSpace(requestLine))
@@ -59,6 +60,7 @@ internal class LiteApiServer : IHostedService
                         if (firstLine)
                         {
                             _logger.LogInformation("Received request: " + requestLine);
+                            request = new HttpRequest(requestLine);
                         }
                         else
                         {
@@ -68,9 +70,7 @@ internal class LiteApiServer : IHostedService
                         requestLine = ReadLine(stream);
                     }
 
-                    var response = "<html><head><title>Test</title><body><h1>Test</h1>Test page</body></html>";
-                    var responseBytes = Encoding.UTF8.GetBytes(response);
-                    await stream.WriteAsync(responseBytes, cancellationToken);
+                    await ProcessRequestAsync(request, stream, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -98,5 +98,47 @@ internal class LiteApiServer : IHostedService
         } while (ch != 10);
 
         return sb.ToString();
+    }
+
+    private async Task ProcessRequestAsync(HttpRequest request, Stream responseStream, CancellationToken cancellationToken)
+    {
+        if (request.Resource == null)
+        {
+            throw new InvalidOperationException("No resource was specified");
+        }
+
+        var resource = request.Resource == "/" ? "index.html" : request.Resource;
+
+        var pathParts = resource.Split('/');
+
+        var path = "wwwroot";
+        foreach (var pathPart in pathParts)
+        {
+            path = Path.Combine(path, pathPart);
+        }
+
+        if (!File.Exists(path))
+        {
+            throw new InvalidOperationException("Requested resource not found");
+        }
+
+        var content = await File.ReadAllBytesAsync(path, cancellationToken);
+        content = RemoveBOM(content);
+        await responseStream.WriteAsync(content, cancellationToken);
+    }
+
+    private byte[] RemoveBOM(byte[] bytes)
+    {
+        if (bytes.Length < 3)
+        {
+            return bytes;
+        }
+
+        if (bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+        {
+            return bytes.Skip(3).ToArray();
+        }
+
+        return bytes;
     }
 }
