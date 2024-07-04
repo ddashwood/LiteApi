@@ -5,7 +5,7 @@ namespace LiteApi;
 
 internal class HttpResponseProcessor
 {
-    public async Task ProcessResponseAsync(HttpResponse response, NetworkStream stream, CancellationToken cancellationToken)
+    public async Task ProcessResponseAsync(HttpResponse response, Stream stream, CancellationToken cancellationToken)
     {
 
         byte[] line;
