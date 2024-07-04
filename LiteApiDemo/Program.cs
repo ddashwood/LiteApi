@@ -6,17 +6,17 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 await Host.CreateDefaultBuilder()
-    .ConfigureAppConfiguration(config =>
+    .ConfigureAppConfiguration((context, config) =>
     {
         config.AddJsonFile("appsettings.json", optional: false);
-        config.AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true);
+        config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true);
     })
     .ConfigureServices(services =>
     {
         services.AddScoped<M1>();
         services.AddScoped<M2>();
         services.AddScoped<M3>();
-
+        
         services.AddLiteApi(80, config =>
         {
             config.Add<M1>();

@@ -5,7 +5,7 @@
       "launchBrowser": true,
       "launchUrl": "http://localhost",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "DOTNET_ENVIRONMENT": "Development"
       },
       "applicationUrl": "https://localhost:50238;http://localhost:50239"
     }
