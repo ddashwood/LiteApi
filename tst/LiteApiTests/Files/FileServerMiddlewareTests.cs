@@ -20,8 +20,10 @@ public class FileServerMiddlewareTests
         var factory = new ServiceFactory();
         var middleware = factory.Create<FileServerMiddleware, FileServiceMiddlewareMockConfigurators>(
             out var configurators,
-            new NamedParameter { Name = "root", Value = @"C:\UnitTest" }
+            new NamedParameter { Name = "root", Value = "UnitTestRoot" }
         );
+
+        var path = Path.Combine("UnitTestRoot", "index.html");
 
         var config = new LiteApiConfiguration
         {
@@ -39,8 +41,8 @@ public class FileServerMiddlewareTests
         var responseMock = new Mock<IHttpResponse>();
 
         configurators.ConfigOptions.Setup(m => m.Value).Returns(config);
-        configurators.FileHelper.Setup(m => m.FileExists(@"C:\UnitTest\index.html")).Returns(true);
-        configurators.FileHelper.Setup(m => m.ReadAllBytesAsync(@"C:\UnitTest\index.html", It.IsAny<CancellationToken>()))
+        configurators.FileHelper.Setup(m => m.FileExists(path)).Returns(true);
+        configurators.FileHelper.Setup(m => m.ReadAllBytesAsync(path, It.IsAny<CancellationToken>()))
             .ReturnsAsync(fileBytes);
         responseMock.Setup(m => m.Headers).Returns(responseHeaders);
 
@@ -63,11 +65,14 @@ public class FileServerMiddlewareTests
         var factory = new ServiceFactory();
         var middleware = factory.Create<FileServerMiddleware, FileServiceMiddlewareMockConfigurators>(
             out var configurators,
-            new NamedParameter { Name = "root", Value = @"C:\UnitTest" }
+            new NamedParameter { Name = "root", Value = "UnitTestRoot" }
         );
 
+        var path = Path.Combine("UnitTestRoot", "index.html");
+
+
         var responseMock = new Mock<IHttpResponse>();
-        configurators.FileHelper.Setup(m => m.FileExists(@"C:\UnitTest\index.html")).Returns(false);
+        configurators.FileHelper.Setup(m => m.FileExists(path)).Returns(false);
         var request = new HttpRequest("GET / HTTP/1.1");
 
         // Act
