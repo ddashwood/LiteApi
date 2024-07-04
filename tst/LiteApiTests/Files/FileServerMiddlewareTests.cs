@@ -66,16 +66,8 @@ public class FileServerMiddlewareTests
             new NamedParameter { Name = "root", Value = @"C:\UnitTest" }
         );
 
-        var config = new LiteApiConfiguration
-        {
-            MimeTypes = [ ]
-        };
-
         var responseMock = new Mock<IHttpResponse>();
-
-        configurators.ConfigOptions.Setup(m => m.Value).Returns(config);
         configurators.FileHelper.Setup(m => m.FileExists(@"C:\UnitTest\index.html")).Returns(false);
-
         var request = new HttpRequest("GET / HTTP/1.1");
 
         // Act
