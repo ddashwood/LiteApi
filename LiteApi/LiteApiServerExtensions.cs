@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using LiteApi.Files;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LiteApi;
@@ -26,6 +27,8 @@ public static class LiteApiServerExtensions
         services.Configure<LiteApiConfiguration>(appConfig.GetSection("LiteApi"));
         services.AddTransient<HttpRequestFactory>();
         services.AddTransient<HttpResponseProcessor>();
+
+        services.AddScoped<IFileHelper, FileHelper>();
 
         services.AddHostedService(services => ActivatorUtilities.CreateInstance<LiteApiServer>(services, port, config));
 

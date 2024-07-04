@@ -7,17 +7,22 @@ namespace LiteApi.Files;
 internal class FileServerMiddleware : IMiddleware
 {
     private readonly ILogger<FileServerMiddleware> _logger;
-    private readonly LiteApiConfiguration _config;
+    private readonly IOptions<LiteApiConfiguration> _configOptions;
     private readonly string _root;
+    private readonly IFileHelper _fileHelper;
 
-    public FileServerMiddleware(ILogger<FileServerMiddleware> logger, IOptions<LiteApiConfiguration> config, string root)
+    public FileServerMiddleware(ILogger<FileServerMiddleware> logger,
+                                IOptions<LiteApiConfiguration> configOptions,
+                                string root,
+                                IFileHelper fileHelper)
     {
         _logger = logger;
-        _config = config.Value;
+        _configOptions = configOptions;
         _root = root;
+        _fileHelper = fileHelper;
     }
 
-    public async Task InvokeAsync(HttpRequest request, HttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
+    public async Task InvokeAsync(IHttpRequest request, IHttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
     {
         var success = await ProcessFileRequestAsync(request, response, cancellationToken);
 
@@ -34,7 +39,7 @@ internal class FileServerMiddleware : IMiddleware
         }
     }
 
-    private async Task<bool> ProcessFileRequestAsync(HttpRequest request, HttpResponse response, CancellationToken cancellationToken)
+    private async Task<bool> ProcessFileRequestAsync(IHttpRequest request, IHttpResponse response, CancellationToken cancellationToken)
     {
         if (request.Target == null)
         {
@@ -51,14 +56,14 @@ internal class FileServerMiddleware : IMiddleware
             path = Path.Combine(path, pathPart);
         }
 
-        if (!File.Exists(path))
+        if (!_fileHelper.FileExists(path))
         {
             return false;
         }
 
         _logger.LogInformation("Serving file at path: {path}", path);
 
-        var content = await File.ReadAllBytesAsync(path, cancellationToken);
+        var content = await _fileHelper.ReadAllBytesAsync(path, cancellationToken);
         content = RemoveBOM(content);
         response.SetContent(content);
 
@@ -66,7 +71,7 @@ internal class FileServerMiddleware : IMiddleware
         if (dotIndex != -1)
         {
             var extension = resource.Substring(dotIndex);
-            if (_config.MimeTypesByExtension.Value.TryGetValue(extension, out var mimeType))
+            if (_configOptions.Value.MimeTypesByExtension.Value.TryGetValue(extension, out var mimeType))
             {
                 response.Headers.Add("Content-Type", mimeType.Type);
             }

@@ -2,7 +2,7 @@
 
 namespace LiteApi;
 
-public class HttpResponse
+internal class HttpResponse : IHttpResponse
 {
     private byte[]? _content;
     public byte[]? Content => _content?.ToArray();

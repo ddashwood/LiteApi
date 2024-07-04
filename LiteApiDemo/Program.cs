@@ -39,7 +39,7 @@ public class M1 : IMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpRequest request, HttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
+    public async Task InvokeAsync(IHttpRequest request, IHttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
     {
         _logger.LogInformation("In M1");
         await next(request, response);
@@ -55,7 +55,7 @@ public class M2 : IMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpRequest request, HttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
+    public async Task InvokeAsync(IHttpRequest request, IHttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
     {
         _logger.LogInformation("In M2");
         await next(request, response);
@@ -71,7 +71,7 @@ public class M3 : IMiddleware
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpRequest request, HttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
+    public async Task InvokeAsync(IHttpRequest request, IHttpResponse response, RequestDelegate next, CancellationToken cancellationToken)
     {
         _logger.LogInformation("In M3");
         await next(request, response);

@@ -1,8 +1,8 @@
 ﻿namespace LiteApi;
 
-public delegate Task RequestDelegate(HttpRequest request, HttpResponse response);
+public delegate Task RequestDelegate(IHttpRequest request, IHttpResponse response);
 
 public interface IMiddleware
 {
-    Task InvokeAsync(HttpRequest request, HttpResponse response, RequestDelegate next, CancellationToken cancellationToken);
+    Task InvokeAsync(IHttpRequest request, IHttpResponse response, RequestDelegate next, CancellationToken cancellationToken);
 }

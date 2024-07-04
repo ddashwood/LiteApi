@@ -1,6 +1,6 @@
 ﻿namespace LiteApi;
 
-public class HttpRequest
+internal class HttpRequest : IHttpRequest
 {
     public string? Method { get; }
     public string? Target { get; }
