@@ -8,6 +8,7 @@ public class HttpResponse
     public byte[]? Content => _content?.ToArray();
     public bool ResponseSet { get; private set; }
     public HttpStatusCode StatusCode { get; private set; } = HttpStatusCode.OK;
+    public HttpHeaderCollection Headers { get; } = new();
 
     internal HttpResponse()
     { }
