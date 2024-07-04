@@ -1,16 +1,19 @@
 ﻿
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace LiteApi.Files;
 
 internal class FileServerMiddleware : IMiddleware
 {
     private readonly ILogger<FileServerMiddleware> _logger;
+    private readonly LiteApiConfiguration _config;
     private readonly string _root;
 
-    public FileServerMiddleware(ILogger<FileServerMiddleware> logger, string root)
+    public FileServerMiddleware(ILogger<FileServerMiddleware> logger, IOptions<LiteApiConfiguration> config, string root)
     {
         _logger = logger;
+        _config = config.Value;
         _root = root;
     }
 
@@ -58,6 +61,17 @@ internal class FileServerMiddleware : IMiddleware
         var content = await File.ReadAllBytesAsync(path, cancellationToken);
         content = RemoveBOM(content);
         response.SetContent(content);
+
+        var dotIndex = resource.LastIndexOf(".");
+        if (dotIndex != -1)
+        {
+            var extension = resource.Substring(dotIndex);
+            if (_config.MimeTypesByExtension.Value.TryGetValue(extension, out var mimeType))
+            {
+                response.Headers.Add("Content-Type", mimeType.Type);
+            }
+        }
+
         return true;
     }
 

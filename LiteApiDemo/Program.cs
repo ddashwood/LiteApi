@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 await Host.CreateDefaultBuilder()
     .ConfigureAppConfiguration((context, config) =>
     {
+        config.AddLiteApiConfiguration();
         config.AddJsonFile("appsettings.json", optional: false);
         config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true);
     })
